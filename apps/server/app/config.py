@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     # Stage 3（PRD §4.2）
     stage3_timeout_s: float = 10.0
 
+    # 流水线后端（M1 mock / M2a real，TDD §1.1）
+    pipeline_backend: str = "mock"
+    # 模型版本号（写入导出 SVG 头部注释，PRD 附录 B.6）
+    model_version: str = "mock-0.1.0"
+
     # CORS（前端 dev server）
     cors_origins: list[str] = ["http://localhost:5173", "http://127.0.0.1:5173"]
 

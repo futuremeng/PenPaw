@@ -19,6 +19,7 @@ class MockStage1:
 
     def run(
         self,
+        image,  # noqa: ARG002 - mock 忽略图像数据（real 后端使用）
         image_size: tuple[int, int],
         roi_regions: list[RoiRegion],
         sliders: SliderParams,

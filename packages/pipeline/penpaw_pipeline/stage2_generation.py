@@ -15,6 +15,7 @@ class MockStage2:
 
     def run(
         self,
+        image,  # noqa: ARG002 - mock 忽略图像数据（real 后端使用）
         image_size: tuple[int, int],
         stage1: Stage1Output,
         sliders: SliderParams,

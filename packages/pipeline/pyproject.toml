@@ -1,9 +1,17 @@
 [project]
 name = "penpaw-pipeline"
-version = "0.1.0"
-description = "PenPaw three-stage neural-symbolic pipeline (M1: mock implementations)"
+version = "0.2.0"
+description = "PenPaw three-stage neural-symbolic pipeline (M2a: classical segmentation + flow field + rule-based generation)"
 requires-python = ">=3.11,<3.13"
-dependencies = []
+dependencies = [
+    "numpy>=1.26",
+    "opencv-python-headless>=4.9",
+]
+
+# M2 真实模型（SAM + DINOv2）为可选懒加载依赖，需手动安装（权重见 scripts/download_models.py）：
+#   uv pip install torch
+#   uv pip install git+https://github.com/facebookresearch/segment-anything.git
+# 缺省时 real 后端自动回退经典分割（segmentation.segment_classical）。
 
 [build-system]
 requires = ["hatchling"]

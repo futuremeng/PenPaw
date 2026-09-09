@@ -9,7 +9,7 @@ from __future__ import annotations
 import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException
-from penpaw_pipeline import PipelineRunner, RoiRegion, SliderParams
+from penpaw_pipeline import PipelineRunner, RoiRegion, SliderParams, load_image
 
 from app.dependencies import get_runner, get_store
 from app.schemas import PreviewRequest, PreviewResult
@@ -47,8 +47,10 @@ async def preview(
     sliders = SliderParams(smoothness=req.smoothness, detail=req.detail)
 
     async with _get_lock(asset_id):
+        # real 后端需要真实图像（numpy RGB）；mock 后端忽略
+        image = load_image(asset.image_path) if runner.config.backend == "real" else None
         result = await asyncio.to_thread(
-            runner.fast_path, (asset.width, asset.height), regions, sliders
+            runner.fast_path, image, (asset.width, asset.height), regions, sliders
         )
 
     store.save_preview(asset_id, result.svg)

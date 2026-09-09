@@ -13,6 +13,9 @@ from dataclasses import dataclass
 class PipelineConfig:
     # "cpu" | "mps" | "cuda" —— 由部署层（云端 worker / 桌面 sidecar）决定
     device: str = "cpu"
+    # "mock" | "real" —— 流水线后端（PENPAW_PIPELINE_BACKEND）
+    # mock：M1 确定性 mock；real：M2a 经典分割 + 方向场 + 规则式生成
+    backend: str = "mock"
     # 模型版本号，写入导出 SVG 头部注释（PRD 附录 B.6）
     model_version: str = "mock-0.1.0"
     # Stage 3 硬超时（PRD §4.2：> 10s 触发降级）

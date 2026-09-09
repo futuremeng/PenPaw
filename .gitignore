@@ -17,6 +17,9 @@ apps/web/dist/
 var/
 *.log
 
+# 模型权重（scripts/download_models.py 下载，含许可证清单 manifest.json）
+models/
+
 # IDE / OS
 .idea/
 .vscode/

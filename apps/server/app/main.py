@@ -28,7 +28,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     app.state.store = AssetStore(settings.storage_dir, settings.asset_ttl_hours)
     app.state.runner = PipelineRunner(
-        PipelineConfig(stage3_timeout_s=settings.stage3_timeout_s)
+        PipelineConfig(
+            backend=settings.pipeline_backend,
+            model_version=settings.model_version,
+            stage3_timeout_s=settings.stage3_timeout_s,
+        )
     )
     app.state.safety = MockContentSafetyChecker()
     app.state.tasks = TaskRegistry()
