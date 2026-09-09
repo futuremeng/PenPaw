@@ -27,3 +27,6 @@ ignore = ["B008"]
 
 [tool.pytest.ini_options]
 testpaths = ["apps/server/tests", "packages/pipeline/tests"]
+markers = [
+    "slow: 真实模型（SAM/DINOv2）集成测试，需权重就位（scripts/download_models.py）；用 -m 'not slow' 跳过",
+]

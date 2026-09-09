@@ -31,6 +31,9 @@ def real_client(tmp_path):
         stage3_timeout_s=10.0,
         pipeline_backend="real",
         model_version="rule-test-0.1",
+        # M2a 集成测试走经典回退路径（快速确定性）；SAM 路径见 test_sam_integration.py
+        use_sam=False,
+        use_dinov2=False,
     )
     app = create_app(settings)
     with TestClient(app) as c:

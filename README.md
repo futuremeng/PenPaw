@@ -9,7 +9,7 @@
 
 | 阶段 | 职责 | 状态 |
 |------|------|---------|
-| Stage 1 感知 | SAM（Mask）+ DINOv2（语义特征）+ 方向场估计器（切线流） | M2a：经典分割 + 方向场（SAM/DINOv2 懒加载） |
+| Stage 1 感知 | SAM（Mask）+ DINOv2（语义特征）+ 方向场估计器（切线流） | M2：SAM + DINOv2 已接入（缺权重自动回退经典分割） |
 | Stage 2 生成 | Flow-Matching 潜空间采样 → 离散 SVG 命令序列 | M2a：规则式贝塞尔生成（M2b 换 Flow-Matching） |
 | Stage 3 优化 | DiffVG 可微分光栅化 + 梯度寻径 | M2a：规则式重拟合精简（M3 换 DiffVG） |
 
@@ -36,13 +36,14 @@ docs/
 uv sync --all-packages --all-extras   # 安装 workspace 依赖 + dev extras（Python 3.12）
 cd apps/server
 uv run uvicorn app.main:app --reload --port 8000        # mock 后端（默认）
-PENPAW_PIPELINE_BACKEND=real uv run uvicorn app.main:app --port 8000   # M2a 真实规则式后端
+PENPAW_PIPELINE_BACKEND=real uv run uvicorn app.main:app --port 8000   # M2 真实后端
 ```
 
-> M2a `real` 后端为 CPU 计算（经典分割 + 方向场 + 贝塞尔生成），无需 GPU/模型下载。
-> 接入 SAM/DINOv2 真实模型：`uv pip install torch` +
-> `uv pip install git+https://github.com/facebookresearch/segment-anything.git`，
-> 再 `uv run python scripts/download_models.py` 下载权重（自动回退，缺权重不影响 real 后端）。
+> M2 `real` 后端默认走经典分割（CPU，无需模型）。启用 SAM + DINOv2 真实模型：
+> `uv pip install torch` + `uv pip install git+https://github.com/facebookresearch/segment-anything.git`，
+> 再 `uv run python scripts/download_models.py` 下载权重（SAM 375MB + DINOv2 88MB）。
+> 设备自动检测（`PENPAW_PIPELINE_DEVICE=auto` → cuda>mps>cpu）；缺权重/关闭
+> （`PENPAW_USE_SAM=0`）时自动回退经典分割，功能不受影响。
 
 ### 前端
 
@@ -86,7 +87,25 @@ docker compose -f infra/docker/docker-compose.yml up --build
 - [x] 后端切换：`PENPAW_PIPELINE_BACKEND=mock|real`，server 图像解码接线
 - [x] SAM / DINOv2 懒加载集成 + 权重下载脚本（许可证标注，缺省自动回退经典）
 - [x] 测试：pipeline 27 项 + server real 后端 2 项，全链路 39 项通过；ruff 全绿
-- [ ] M2：SAM + DINOv2 真实模型接入（需 GPU 环境 + 权重下载）
+- [x] M2：SAM + DINOv2 真实模型接入（见下）
 - [ ] M2b：Flow-Matching 生成器（研究性，TDD §4.2）
+
+## M2 里程碑状态（真实模型接入）
+
+- [x] SAM ViT-B 分割：全图自动分割 + ROI box-prompt 双模式（`sam_segmenter.py`）
+- [x] DINOv2 ViT-S/14 语义特征：patch 特征 + 区域一致性度量（`dinov2_features.py`）
+- [x] 设备自动检测：`resolve_device()` cuda > mps > cpu（`PENPAW_PIPELINE_DEVICE=auto`）
+- [x] MPS float64 兼容修补（SAM 点坐标强制 float32，Apple Silicon 可跑）
+- [x] 置信度复合分：区域数 × 边缘覆盖 × SAM mask score × DINOv2 一致性
+- [x] 本地权重加载（`scripts/download_models.py`，避免运行时联网）
+- [x] 开关：`PENPAW_USE_SAM` / `PENPAW_USE_DINOV2`（缺权重/关闭自动回退经典）
+- [x] 测试：新增 5 项 slow 集成测试（`pytest -m slow`，缺权重自动 skip）；快速套件 40 项 + slow 5 项全绿
+- [ ] 性能达标：快路径 P99 < 1s @ T4（本机 MPS 约 8~9s，需 T4 实测）
+- [ ] 方向场 R1 门控报告（TDD §4.1，M2b 前产出）
+
+> 启用真实模型：`uv pip install torch` +
+> `uv pip install git+https://github.com/facebookresearch/segment-anything.git`，
+> 再 `uv run python scripts/download_models.py` 下载权重（SAM 375MB + DINOv2 88MB）。
+> 缺权重时 real 后端自动回退经典分割，功能不受影响。
 
 > 设计文档：[docs/TECH-DESIGN.md](docs/TECH-DESIGN.md)（M2~M5 实施基准，含许可证审计归档）。

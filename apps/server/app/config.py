@@ -25,6 +25,10 @@ class Settings(BaseSettings):
 
     # 流水线后端（M1 mock / M2a real，TDD §1.1）
     pipeline_backend: str = "mock"
+    # M2：设备（auto 自动检测 cuda>mps>cpu）与模型开关
+    pipeline_device: str = "auto"
+    use_sam: bool = True
+    use_dinov2: bool = True
     # 模型版本号（写入导出 SVG 头部注释，PRD 附录 B.6）
     model_version: str = "mock-0.1.0"
 

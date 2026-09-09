@@ -9,7 +9,16 @@ from penpaw_pipeline.svg import count_control_points
 
 
 def _real_runner() -> PipelineRunner:
-    return PipelineRunner(PipelineConfig(backend="real", model_version="rule-test-0.1"))
+    # M2a 测试走经典回退路径（use_sam/use_dinov2=False），保持快速确定性；
+    # SAM/DINOv2 路径见 test_sam_integration.py（标记 slow）。
+    return PipelineRunner(
+        PipelineConfig(
+            backend="real",
+            model_version="rule-test-0.1",
+            use_sam=False,
+            use_dinov2=False,
+        )
+    )
 
 
 def test_fast_path_full_image(circle_image):

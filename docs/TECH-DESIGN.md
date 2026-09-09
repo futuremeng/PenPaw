@@ -5,7 +5,7 @@
 | 版本 | v1.1 |
 | 日期 | 2026-09-09 |
 | 上游文档 | [PRD v1.5](PRD-v1.5.md)（需求基准，冲突时以 PRD 为准并走修订流程） |
-| 状态 | M1 + M2a（真实规则式流水线）已完成，本文档为 M2~M5 实施基准 |
+| 状态 | M1 + M2a（真实规则式流水线）+ M2（SAM/DINOv2 真实模型接入）已完成，本文档为 M2b~M5 实施基准 |
 
 ## 1. 总体架构
 
@@ -203,6 +203,14 @@ class Stage1Perception:
 `confidence = w1·SAM_mask_score均值 + w2·DINOv2_区域特征一致性 + w3·方向场一致性`，初值 w=(0.4, 0.3, 0.3)，阈值 0.7 触发"建议人工精修"。
 
 **R1 门禁**（方向场单独验收）：Golden Test Set 简单图形集上方向角误差 < 15° 的像素占比 > 85%；M2a 不达标则 M2b 提前启动，仍不达标则 Stage 2 退化为纯 Mask + 边缘输入（PRD R1 预案）。
+
+**M2 实施状态（2026-09-09，已落地）**：
+- SAM ViT-B：`sam_segmenter.py`，全图 `automatic_mask_generator` + ROI `predict(box)` 双模式，mask score 写入 `SegmentedRegion.score`；
+- DINOv2 ViT-S/14：`dinov2_features.py`，`get_intermediate_layers` 取 patch tokens（16×16，384 维），`region_consistency()` 做区域内 L2 归一化方差 → 一致性分；本地权重加载（`scripts/download_models.py`），避免运行时联网；
+- 设备：`config.resolve_device()` 自动检测 cuda>mps>cpu（`PENPAW_PIPELINE_DEVICE`）；MPS float64 不兼容已在 `sam_segmenter._patch_mps_float64` 修补（点坐标强制 float32），Apple Silicon 可跑；
+- 置信度：落地为**乘性复合分** `base(区域数) × 边缘覆盖 × SAM_score × DINOv2_一致性`（未启用信号保持中性，None 不参与），替代上表加权和；权重/阈值 M3 前定稿；
+- 开关：`PENPAW_USE_SAM` / `PENPAW_USE_DINOV2`，缺权重或关闭时自动回退经典分割（`segment_classical`），功能不受影响；
+- 待办：T4 性能实测（P99<1s）、方向场 R1 门控报告（M2b 前）。
 
 ### 4.2 Stage 2 生成（M2，分两期）
 

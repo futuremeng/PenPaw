@@ -30,6 +30,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.runner = PipelineRunner(
         PipelineConfig(
             backend=settings.pipeline_backend,
+            device=settings.pipeline_device,
+            use_sam=settings.use_sam,
+            use_dinov2=settings.use_dinov2,
             model_version=settings.model_version,
             stage3_timeout_s=settings.stage3_timeout_s,
         )

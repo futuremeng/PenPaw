@@ -28,6 +28,7 @@ class SegmentedRegion:
     bbox: tuple[int, int, int, int]  # x, y, w, h
     mask: np.ndarray  # HxW uint8（全图坐标系，255 为区域内）
     fill: str  # 区域主色（hex）
+    score: float = 1.0  # 分割置信度（SAM mask score；经典分割为 1.0）
 
 
 def _dominant_color(image: np.ndarray, mask: np.ndarray) -> str:
@@ -37,6 +38,16 @@ def _dominant_color(image: np.ndarray, mask: np.ndarray) -> str:
     mean = pixels.mean(axis=0)
     r, g, b = (int(v) for v in mean)
     return f"#{r:02X}{g:02X}{b:02X}"
+
+
+def _bbox_of_mask(mask: np.ndarray) -> tuple[int, int, int, int]:
+    """由二值 mask 计算包围盒 (x, y, w, h)。"""
+    ys, xs = np.where(mask > 0)
+    if len(xs) == 0:
+        return (0, 0, 0, 0)
+    x0, x1 = int(xs.min()), int(xs.max())
+    y0, y1 = int(ys.min()), int(ys.max())
+    return (x0, y0, x1 - x0 + 1, y1 - y0 + 1)
 
 
 def _edge_mask(gray: np.ndarray) -> np.ndarray:
