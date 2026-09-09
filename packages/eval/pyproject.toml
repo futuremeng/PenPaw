@@ -1,0 +1,26 @@
+[project]
+name = "penpaw-eval"
+version = "0.1.0"
+description = "PenPaw Golden Test Set evaluation (LPIPS/SSIM/control points + VTracer baseline)"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "penpaw-pipeline",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+# M4 引入真实指标时启用：
+# metrics = ["lpips", "scikit-image", "vtracer"]
+
+[tool.uv.sources]
+penpaw-pipeline = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["penpaw_eval"]
+
+[project.scripts]
+penpaw-eval = "penpaw_eval.golden_test:main"

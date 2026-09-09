@@ -1,0 +1,10 @@
+{
+  "name": "penpaw",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev:web": "pnpm --filter @penpaw/web dev",
+    "build:web": "pnpm --filter @penpaw/web build",
+    "test:py": "uv run pytest"
+  }
+}

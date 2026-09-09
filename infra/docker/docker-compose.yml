@@ -1,0 +1,59 @@
+# PenPaw 单机部署（M1：api + web + redis 预留）
+#
+# 用法：
+#   docker compose -f infra/docker/docker-compose.yml up --build
+#   web  → http://localhost:3000
+#   api  → http://localhost:8000/docs
+#
+# M3 接入真实 DiffVG 后启用 worker 服务（GPU 节点，nvidia_docker）。
+
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    # M1 未使用（M3 Celery broker）；保留以便 M3 零改动启用
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/docker/api.Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PENPAW_STORAGE_DIR=/data/assets
+      - PENPAW_ASSET_TTL_HOURS=24
+    volumes:
+      - penpaw-assets:/data/assets
+
+  web:
+    build:
+      context: ../..
+      dockerfile: infra/docker/web.Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - api
+
+  # M3 启用（GPU 节点）：
+  # worker:
+  #   build:
+  #     context: ../..
+  #     dockerfile: infra/docker/worker.Dockerfile
+  #   environment:
+  #     - PENPAW_REDIS_URL=redis://redis:6379/0
+  #   deploy:
+  #     resources:
+  #       reservations:
+  #         devices:
+  #           - driver: nvidia
+  #             count: 1
+  #             capabilities: [gpu]
+
+volumes:
+  penpaw-assets:
